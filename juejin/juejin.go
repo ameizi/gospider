@@ -33,8 +33,7 @@ func main() {
 	})
 
 	c.OnHTML(".article-title", func(e *colly.HTMLElement) {
-		fileName = e.Text
-		fileName = strings.TrimSpace(fileName)
+		fileName = strings.TrimSpace(e.Text)
 	})
 
 	c.OnHTML(".markdown-body", func(e *colly.HTMLElement) {
