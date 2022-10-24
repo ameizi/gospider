@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/fatih/color"
 	"github.com/go-resty/resty/v2"
 	"github.com/gocolly/colly"
 )
@@ -18,9 +19,9 @@ var (
 )
 
 type News struct {
-	Title  string `json:"title"`
-	Url    string `json:"url"`
-	Hotnum string `json:"hotnum"`
+	Title  string `json:"title,omitempty"`
+	Url    string `json:"url,omitempty"`
+	Hotnum string `json:"hotnum,omitempty"`
 }
 
 func RestyFetch(url string) {
@@ -46,14 +47,14 @@ func CollyFetch(url string) {
 	c.OnRequest(func(r *colly.Request) {
 		r.Headers.Set("Cookie", headers["Cookie"])
 		r.Headers.Set("user-agent", userAgent)
-		fmt.Println("Visiting", r.URL.String())
+		color.Red("Visiting：%s", r.URL.String())
 	})
 
 	c.OnHTML("td.td-02", func(e *colly.HTMLElement) {
 		e.DOM.Each(func(i int, selection *goquery.Selection) {
 			news := parse(selection)
 			if news != nil {
-				writer.Write([]string{news.Title, news.Url, news.Hotnum})
+				_ = writer.Write([]string{news.Title, news.Url, news.Hotnum})
 			}
 		})
 	})
@@ -65,14 +66,14 @@ func parse(selection *goquery.Selection) (news *News) {
 	title := selection.Find("a").Text()
 	href := selection.Find("a").AttrOr("href", "")
 	hotnum := strings.TrimSpace(selection.Find("span").Text())
-	if !strings.Contains(href, "javascript:void") && hotnum != "" {
+	if !strings.HasPrefix(href, "javascript:void") && hotnum != "" {
 		news := News{
 			Title:  title,
 			Url:    href,
 			Hotnum: hotnum,
 		}
 		jsonStr, _ := json.MarshalIndent(&news, "", " ")
-		fmt.Println(string(jsonStr))
+		color.Green(string(jsonStr))
 		return &news
 	}
 	return nil
